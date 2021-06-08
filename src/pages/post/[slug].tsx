@@ -27,7 +27,11 @@ interface PostProps {
 }
 
 export default function Post() {
-  return <div>Teste slug</div>;
+  return (
+    <main className={commonStyles.contentContainer}>
+      <div>Teste slug</div>
+    </main>
+  );
 }
 
 // export const getStaticPaths = async () => {

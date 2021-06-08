@@ -9,6 +9,7 @@ import commonStyles from '../styles/common.module.scss';
 import styles from './home.module.scss';
 import { ptBR } from 'date-fns/locale';
 import { useState } from 'react';
+import Link from 'next/link';
 
 interface Post {
   uid?: string;
@@ -29,47 +30,46 @@ interface HomeProps {
   postsPagination: PostPagination;
 }
 
-export default function Home(props: HomeProps) {
-  const {
-    postsPagination: { results, next_page },
-  } = props;
-  const [posts, setPosts] = useState<Post[]>(results);
+export default function Home({ postsPagination }: HomeProps) {
+  const [nextPage, setNextPage] = useState(postsPagination.next_page);
+  const [posts, setPosts] = useState<Post[]>(postsPagination.results);
 
-  async function onCarregarMaisClick(next_page: string) {
-    console.log(next_page);
+  async function onCarregarMaisClick(url: string) {
+    const response = await fetch(url).then(res => res.json());
 
-    const response = await fetch(next_page).then(res => res.json());
-    console.log(response?.results);
-
-    setPosts([...posts]);
+    setNextPage(response.next_page);
+    setPosts([...posts, ...response.results]);
   }
-  // console.log(posts);
-  // console.log(props);
 
   return (
-    <main className={styles.contentContainer}>
+    <main className={commonStyles.contentContainer}>
       <div className={styles.posts}>
         {posts.map(post => {
           return (
-            <a key={post.uid}>
-              <strong>{post.data.title}</strong>
-              <p>{post.data.subtitle}</p>
-              <div className={styles.info}>
-                <div>
-                  <FiCalendar />
-                  <time>{post.first_publication_date}</time>
+            <Link href={`/post/${post.uid}`} key={post.uid}>
+              <a>
+                <strong>{post.data.title}</strong>
+                <p>{post.data.subtitle}</p>
+                <div className={styles.info}>
+                  <div>
+                    <FiCalendar />
+                    <time>{post.first_publication_date}</time>
+                  </div>
+                  <div>
+                    <FiUser />
+                    {post.data.author}
+                  </div>
                 </div>
-                <div>
-                  <FiUser />
-                  {post.data.author}
-                </div>
-              </div>
-            </a>
+              </a>
+            </Link>
           );
         })}
       </div>
-      {next_page && (
-        <button onClick={() => onCarregarMaisClick(next_page)}>
+      {nextPage && (
+        <button
+          className={styles.loadMoreButton}
+          onClick={() => onCarregarMaisClick(nextPage)}
+        >
           Carregar mais posts
         </button>
       )}
@@ -83,8 +83,6 @@ export const getStaticProps: GetStaticProps = async () => {
     [Prismic.predicates.at('document.type', 'posts')],
     { fetch: ['posts.title', 'posts.subtitle', 'posts.author'], pageSize: 1 }
   );
-
-  // console.log(postsResponse);
 
   const posts = postsResponse.results.map<Post>(post => {
     return {
