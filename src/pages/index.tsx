@@ -35,8 +35,24 @@ export default function Home({ postsPagination }: HomeProps) {
   async function onCarregarMaisClick(url: string) {
     const response = await fetch(url).then(res => res.json());
 
+    const postsResponse = response.results.map(post => {
+      return {
+        uid: post.uid,
+        first_publication_date: format(
+          new Date(post.first_publication_date),
+          'dd MMM yyyy',
+          { locale: ptBR }
+        ),
+        data: {
+          title: post.data.title,
+          subtitle: post.data.subtitle,
+          author: post.data.author,
+        },
+      };
+    });
+
     setNextPage(response.next_page);
-    setPosts([...posts, ...response.results]);
+    setPosts([...posts, ...postsResponse]);
   }
 
   return (

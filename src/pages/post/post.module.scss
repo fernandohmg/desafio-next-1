@@ -1,4 +1,17 @@
 .post {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    height: 25rem;
+  }
+}
+
+.contentPost {
+  margin-top: 5rem;
+
   h1 {
     font-size: 3rem;
     font-weight: 700;
