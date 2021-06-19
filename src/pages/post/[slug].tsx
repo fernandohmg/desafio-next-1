@@ -11,8 +11,8 @@ import commonStyles from '../../styles/common.module.scss';
 import styles from './post.module.scss';
 
 interface Post {
+  uid: string;
   first_publication_date: string | null;
-  readingTimeInMinutes?: number;
   data: {
     title: string;
     banner: {
@@ -52,7 +52,13 @@ export default function Post({ post }: PostProps) {
             <div className={styles.info}>
               <div>
                 <FiCalendar />
-                <time>{post.first_publication_date}</time>
+                <time>
+                  {format(
+                    new Date(post.first_publication_date),
+                    'dd MMM yyyy',
+                    { locale: ptBR }
+                  )}
+                </time>
               </div>
               <div>
                 <FiUser />
@@ -60,7 +66,16 @@ export default function Post({ post }: PostProps) {
               </div>
               <div>
                 <FiClock />
-                {post.readingTimeInMinutes} min
+                {Math.ceil(
+                  post.data.content.reduce((acc, cur) => {
+                    const headingCount = cur.heading.split(' ').length;
+                    const bodyCount = RichText.asText(cur.body).split(
+                      ' '
+                    ).length;
+                    return acc + headingCount + bodyCount;
+                  }, 0) / 200
+                )}{' '}
+                min
               </div>
             </div>
             {post.data.content.map(content => {
@@ -106,19 +121,9 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
   const response = await prismic.getByUID('posts', String(slug), {});
   const { data } = response;
 
-  const wordCounter = data.content.reduce((acc, cur) => {
-    const headingCount = cur.heading.split(' ').length;
-    const bodyCount = RichText.asText(cur.body).split(' ').length;
-    return acc + headingCount + bodyCount;
-  }, 0);
-
   const post = {
-    first_publication_date: format(
-      new Date(response.first_publication_date),
-      'dd MMM yyyy',
-      { locale: ptBR }
-    ),
-    readingTimeInMinutes: Math.ceil(wordCounter / 200), //200 words per minute
+    uid: response.uid,
+    first_publication_date: response.first_publication_date,
     data,
   } as Post;
 
