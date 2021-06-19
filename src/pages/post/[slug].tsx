@@ -1,6 +1,9 @@
+import Prismic from '@prismicio/client';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { GetStaticPaths, GetStaticProps } from 'next';
+import Head from 'next/head';
+import { useRouter } from 'next/router';
 import { RichText } from 'prismic-dom';
 import { FiCalendar, FiClock, FiUser } from 'react-icons/fi';
 import { getPrismicClient } from '../../services/prismic';
@@ -9,7 +12,7 @@ import styles from './post.module.scss';
 
 interface Post {
   first_publication_date: string | null;
-  readingTimeInMinutes: number;
+  readingTimeInMinutes?: number;
   data: {
     title: string;
     banner: {
@@ -30,51 +33,69 @@ interface PostProps {
 }
 
 export default function Post({ post }: PostProps) {
+  const router = useRouter();
+
+  if (router.isFallback) {
+    return <div>Carregando...</div>;
+  }
+
   return (
-    <main className={styles.post}>
-      <img src={post.data.banner.url} alt="banner" />
-      <article className={commonStyles.contentContainer}>
-        <div className={styles.contentPost}>
-          <h1>{post.data.title}</h1>
-          <div className={styles.info}>
-            <div>
-              <FiCalendar />
-              <time>{post.first_publication_date}</time>
+    <>
+      <Head>
+        <title>{post.data.title} | spacetraveling</title>
+      </Head>
+      <main className={styles.post}>
+        <img src={post.data.banner.url} alt="banner" />
+        <article className={commonStyles.contentContainer}>
+          <div className={styles.contentPost}>
+            <h1>{post.data.title}</h1>
+            <div className={styles.info}>
+              <div>
+                <FiCalendar />
+                <time>{post.first_publication_date}</time>
+              </div>
+              <div>
+                <FiUser />
+                {post.data.author}
+              </div>
+              <div>
+                <FiClock />
+                {post.readingTimeInMinutes} min
+              </div>
             </div>
-            <div>
-              <FiUser />
-              {post.data.author}
-            </div>
-            <div>
-              <FiClock />
-              {post.readingTimeInMinutes} min
-            </div>
+            {post.data.content.map(content => {
+              return (
+                <section key={content.heading}>
+                  <h2>{content.heading}</h2>
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: RichText.asHtml(content.body),
+                    }}
+                  ></div>
+                </section>
+              );
+            })}
           </div>
-          {post.data.content.map(content => {
-            return (
-              <section key={content.heading}>
-                <h2>{content.heading}</h2>
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: RichText.asHtml(content.body),
-                  }}
-                ></div>
-              </section>
-            );
-          })}
-        </div>
-      </article>
-    </main>
+        </article>
+      </main>
+    </>
   );
 }
 
 export const getStaticPaths: GetStaticPaths = async () => {
   const prismic = getPrismicClient();
-  // const posts = await prismic.query(TODO);
+  const postsResponse = await prismic.query(
+    [Prismic.predicates.at('document.type', 'posts')],
+    { fetch: ['posts.title', 'posts.subtitle', 'posts.author'], pageSize: 1 }
+  );
 
   return {
-    paths: [{ params: { slug: 'como-utilizar-hooks' } }],
-    fallback: 'blocking',
+    paths: postsResponse.results.map(post => {
+      return {
+        params: { slug: post.uid },
+      };
+    }),
+    fallback: true,
   };
 };
 

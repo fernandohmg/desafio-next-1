@@ -2,6 +2,7 @@ import Prismic from '@prismicio/client';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { GetStaticProps } from 'next';
+import Head from 'next/head';
 import Link from 'next/link';
 import { useState } from 'react';
 import { FiCalendar, FiUser } from 'react-icons/fi';
@@ -56,38 +57,43 @@ export default function Home({ postsPagination }: HomeProps) {
   }
 
   return (
-    <main className={commonStyles.contentContainer}>
-      <div className={styles.posts}>
-        {posts.map(post => {
-          return (
-            <Link href={`/post/${post.uid}`} key={post.uid}>
-              <a>
-                <strong>{post.data.title}</strong>
-                <p>{post.data.subtitle}</p>
-                <div className={styles.info}>
-                  <div>
-                    <FiCalendar />
-                    <time>{post.first_publication_date}</time>
+    <>
+      <Head>
+        <title>Posts | spacetraveling</title>
+      </Head>
+      <main className={commonStyles.contentContainer}>
+        <div className={styles.posts}>
+          {posts.map(post => {
+            return (
+              <Link href={`/post/${post.uid}`} key={post.uid}>
+                <a>
+                  <strong>{post.data.title}</strong>
+                  <p>{post.data.subtitle}</p>
+                  <div className={styles.info}>
+                    <div>
+                      <FiCalendar />
+                      <time>{post.first_publication_date}</time>
+                    </div>
+                    <div>
+                      <FiUser />
+                      {post.data.author}
+                    </div>
                   </div>
-                  <div>
-                    <FiUser />
-                    {post.data.author}
-                  </div>
-                </div>
-              </a>
-            </Link>
-          );
-        })}
-      </div>
-      {nextPage && (
-        <button
-          className={styles.loadMoreButton}
-          onClick={() => onCarregarMaisClick(nextPage)}
-        >
-          Carregar mais posts
-        </button>
-      )}
-    </main>
+                </a>
+              </Link>
+            );
+          })}
+        </div>
+        {nextPage && (
+          <button
+            className={styles.loadMoreButton}
+            onClick={() => onCarregarMaisClick(nextPage)}
+          >
+            Carregar mais posts
+          </button>
+        )}
+      </main>
+    </>
   );
 }
 
